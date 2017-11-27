@@ -1,0 +1,30 @@
+{
+	"initial": [
+		"libs/modules/egret/egret.js",
+		"libs/modules/egret/egret.web.js",
+		"libs/modules/game/game.js",
+		"libs/modules/res/res.js",
+		"libs/modules/eui/eui.js",
+		"libs/modules/tween/tween.js",
+		"promise/bin/promise.js",
+		"libs/modules/lodash/lodash.js",
+		"libs/modules/layer/layer.js",
+		"libs/modules/features/features.js"
+	],
+	"game": [
+		"bin-debug/models/mesh/meshBase.js",
+		"bin-debug/models/mesh/filledCells.js",
+		"bin-debug/Main.js",
+		"bin-debug/ThemeAdapter.js",
+		"bin-debug/models/cell.js",
+		"bin-debug/models/mesh.js",
+		"bin-debug/models/mesh/crushedCells.js",
+		"bin-debug/LoadingUI.js",
+		"bin-debug/AssetAdapter.js",
+		"bin-debug/views/bubbleUI.js",
+		"bin-debug/views/controlPanel.js",
+		"bin-debug/views/gameUI.js",
+		"bin-debug/views/meshUI.js",
+		"bin-debug/views/wheelUI.js"
+	]
+}
