@@ -20,7 +20,7 @@ namespace ui {
 
 			this.diameter = this.width / this.mesh.cols;
 			this.radius = this.diameter / 2;
-			this.crossDeltaHeight = this.diameter -  this.diameter * Math.cos(layer.sharp.d2r(30));
+			this.crossDeltaHeight = this.diameter -  this.diameter * Math.cos(sharp.d2r(30));
 			this.renderMesh();
 		}
 

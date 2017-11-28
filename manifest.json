@@ -8,8 +8,10 @@
 		"libs/modules/tween/tween.js",
 		"promise/bin/promise.js",
 		"libs/modules/lodash/lodash.js",
-		"libs/modules/layer/layer.js",
-		"libs/modules/features/features.js"
+		"libs/modules/axios/axios.js",
+		"libs/modules/features/features.js",
+		"libs/modules/_/_.js",
+		"libs/modules/layer/layer.js"
 	],
 	"game": [
 		"bin-debug/models/mesh/meshBase.js",

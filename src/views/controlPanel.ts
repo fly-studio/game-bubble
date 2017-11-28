@@ -51,6 +51,11 @@ namespace ui {
 			jetSprite.graphics.drawCircle(0, 0, 5);
 			jetSprite.graphics.moveTo(0, -15);
 			jetSprite.graphics.lineTo(0, -35);
+			let {x, y} = sharp.circlePoint(new sharp.Point(0, -35), 15, sharp.d2r(45));
+			jetSprite.graphics.lineTo(x, y),
+			jetSprite.graphics.moveTo(0, -35);
+			({x, y} = sharp.circlePoint(new sharp.Point(0, -35), 15, sharp.d2r(135)));
+			jetSprite.graphics.lineTo(x, y),
 			this.addChild(jetSprite);
 			this.jetSprite = jetSprite;
 

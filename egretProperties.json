@@ -1,54 +1,62 @@
 {
-  "native": {
-    "path_ignore": []
-  },
-  "publish": {
-    "web": 0,
-    "native": 1,
-    "path": "bin-release"
-  },
-  "egret_version": "5.0.12",
-  "template": {},
-  "eui": {
-    "exmlRoot": [
-      "resource/eui_skins"
-    ],
-    "themes": [
-      "resource/default.thm.json"
-    ],
-    "exmlPublishPolicy": "content"
-  },
-  "modules": [
-    {
-      "name": "egret"
-    },
-    {
-      "name": "game"
-    },
-    {
-      "name": "res"
-    },
-    {
-      "name": "eui"
-    },
-    {
-      "name": "tween"
-    },
-    {
-      "name": "promise",
-      "path": "./promise"
-    },
-    {
-      "name": "lodash",
-      "path": "../libs/lodash"
-    },
-    {
-      "name": "layer",
-      "path": "../libs/layer"
-    },
-    {
-      "name": "features",
-      "path": "../libs/features"
-    }
-  ]
+	"native": {
+		"path_ignore": []
+	},
+	"publish": {
+		"web": 0,
+		"native": 1,
+		"path": "bin-release"
+	},
+	"egret_version": "5.0.13",
+	"template": {},
+	"eui": {
+		"exmlRoot": [
+			"resource/eui_skins"
+		],
+		"themes": [
+			"resource/default.thm.json"
+		],
+		"exmlPublishPolicy": "content"
+	},
+	"modules": [
+		{
+			"name": "egret"
+		},
+		{
+			"name": "game"
+		},
+		{
+			"name": "res"
+		},
+		{
+			"name": "eui"
+		},
+		{
+			"name": "tween"
+		},
+		{
+			"name": "promise",
+			"path": "./promise"
+		},
+		{
+			"name": "lodash",
+			"path": "../libs/lodash"
+		},
+		{
+			"name": "axios",
+			"path": "../libs/axios"
+		},
+		{
+			"name": "features",
+			"path": "../libs/features"
+		},
+		{
+			"name": "_",
+			"path": "../libs/_"
+		},
+		{
+			"name": "layer",
+			"path": "../libs/layer"
+		}
+	]
 }
