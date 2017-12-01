@@ -57,6 +57,10 @@
 		{
 			"name": "layer",
 			"path": "../libs/layer"
+		},
+		{
+			"name": "keyboard",
+			"path": "../libs/egret-game-library/keyboard/libsrc"
 		}
 	]
 }

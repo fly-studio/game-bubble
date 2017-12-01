@@ -11,17 +11,17 @@
 		"libs/modules/axios/axios.js",
 		"libs/modules/features/features.js",
 		"libs/modules/_/_.js",
-		"libs/modules/layer/layer.js"
+		"libs/modules/layer/layer.js",
+		"libs/modules/keyboard/keyboard.js"
 	],
 	"game": [
 		"bin-debug/models/mesh/meshBase.js",
 		"bin-debug/models/mesh/filledCells.js",
-		"bin-debug/Main.js",
 		"bin-debug/ThemeAdapter.js",
 		"bin-debug/models/cell.js",
 		"bin-debug/models/mesh.js",
 		"bin-debug/models/mesh/crushedCells.js",
-		"bin-debug/LoadingUI.js",
+		"bin-debug/Main.js",
 		"bin-debug/AssetAdapter.js",
 		"bin-debug/views/bubbleUI.js",
 		"bin-debug/views/controlPanel.js",

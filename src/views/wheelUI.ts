@@ -8,7 +8,6 @@ namespace ui {
 			frameSprite.graphics.lineStyle(1, 0xcccccc);
 			frameSprite.graphics.drawRect(0, 0, this.stage.stageWidth, 100);
 			this.addChild(frameSprite);
-
 		}
 
 		public onRemovedFromStage(event: egret.Event): void {
