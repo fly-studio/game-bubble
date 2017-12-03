@@ -160,7 +160,7 @@ namespace ui {
 				index: number,
 				p: sharp.Point,
 				i: number;
-
+			loop:
 			for(rayIndex = 1; rayIndex < rays.length; ++rayIndex) {
 				ray = rays[rayIndex];
 				for(index of this.mesh.indicesEntries(-1)) // revert
@@ -174,7 +174,7 @@ namespace ui {
 							cell = this.mesh.cell(index - 1);
 
 						if (!cell.blank) // 和一个实心相交
-							continue;
+							break loop;
 						row = this.mesh.row(index);
 						col = this.mesh.col(index);
 
