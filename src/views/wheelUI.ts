@@ -2,12 +2,11 @@ namespace ui {
 	export class WheelUI extends layer.ui.Sprite {
 
 		public onAddedToStage(event: egret.Event) : void {
-			let frameSprite = new egret.Sprite();
-			frameSprite.x = 0;
-			frameSprite.y = this.stage.stageHeight - 100;
-			frameSprite.graphics.lineStyle(1, 0xcccccc);
-			frameSprite.graphics.drawRect(0, 0, this.stage.stageWidth, 100);
-			this.addChild(frameSprite);
+			let wheelSprite = new egret.Shape;
+			wheelSprite.graphics.beginFill(0x0, 0.6);
+			wheelSprite.graphics.lineStyle(1, 0x0, 0.8);
+
+			this.addChild(wheelSprite);
 		}
 
 		public onRemovedFromStage(event: egret.Event): void {

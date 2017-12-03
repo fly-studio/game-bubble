@@ -21,11 +21,11 @@ namespace ui {
 				v = 190;
 			else if (v > 350)
 				v = 350;
-			
+
 			this._shootAngle = v;
 
 			this.drawRay();
-			
+
 			if (this.jetSprite)
 				this.jetSprite.rotation = v - 270
 		}
@@ -89,13 +89,42 @@ namespace ui {
 			this.drawRay();
 			this.kb = new KeyBoard();
 			this.kb.addEventListener(KeyBoard.onkeydown, this.onKeyDown, this);
+
+			//this.stage.touchEnabled = true;
+			this.stage.addEventListener(egret.TouchEvent.TOUCH_TAP, this.onTap, this);
+
 		}
 
-		public reflectPoints(): sharp.Point[]
+		public reflectPoints(): sharp.Ray[]
 		{
 			let rect = sharp.Rectangle.create(this.gameSprite.x, this.gameSprite.y, this.gameSprite.width, this.gameSprite.height);
+			let sides = rect.sides;
 			let ray = new sharp.Ray(this.jetPoint, sharp.d2r(this.shootAngle));
-			return ray.intersectsRectangle(rect);
+
+			let i = 0;
+			let rays: sharp.Ray[] = [];
+			while (true) {
+				let index = i % sides.length;
+				if (i > sides.length * 6) //反射了6次
+					break;
+				let ray1 = ray.reflectLine(sides[index]);
+
+				if (ray1 instanceof sharp.Ray) // 碰撞了
+				{
+					ray = ray1;
+					if (index == 0) // 上
+					{
+						rays.push(ray);
+						break;
+					} else if (index == 1 || index == 3) {//左右
+						rays.push(ray);
+					}
+
+				}
+				i++;
+			}
+
+			return rays;
 		}
 
 		private drawRay()
@@ -106,16 +135,16 @@ namespace ui {
 			this.raySprite.graphics.lineStyle(1, 0xcccccc);
 			this.raySprite.graphics.drawRect(this.gameSprite.x, this.gameSprite.y, this.gameSprite.width, this.gameSprite.height);
 			this.raySprite.graphics.lineStyle(1, 0xff00ff);
-			
+
 			let lastPoint = this.jetPoint;
-			
-			this.reflectPoints().forEach(p => {
+
+			this.reflectPoints().forEach(ray => {
 				this.raySprite.graphics.moveTo(lastPoint.x, lastPoint.y);
-				this.raySprite.graphics.lineTo(p.x, p.y);
-				this.raySprite.graphics.drawCircle(p.x, p.y, 1);
-				this.raySprite.graphics.drawCircle(p.x, p.y, 10);
-				this.raySprite.graphics.moveTo(p.x, p.y);
-				lastPoint = p;
+				this.raySprite.graphics.lineTo(ray.x, ray.y);
+				this.raySprite.graphics.drawCircle(ray.x, ray.y, 1);
+				this.raySprite.graphics.drawCircle(ray.x, ray.y, 10);
+				this.raySprite.graphics.moveTo(ray.x, ray.y);
+				lastPoint = ray.start;
 			});
 		}
 
@@ -130,14 +159,26 @@ namespace ui {
 			}
 		}
 
+		protected onTap(event: egret.TouchEvent)
+		{
+			let angle = sharp.slopeDegree(this.jetPoint, new sharp.Point(event.stageX, event.stageY));
+			let theta = Math.abs(angle - this.shootAngle);
+			egret.Tween.get(this).to({
+				shootAngle: angle
+			}, theta * 5).call(() => {
+				this.shoot();
+			});
+		}
+
 		public onRemovedFromStage(event: egret.Event): void {
 			this.removeAllEventListeners();
-			
+
 		}
 
 		public removeAllEventListeners(): void {
 			this.kb.removeEventListener(KeyBoard.onkeydown, this.onKeyDown, this);
-			
+			this.stage.removeEventListener(egret.TouchEvent.TOUCH_TAP, this.onTap, this);
+
 		}
 	}
 }
