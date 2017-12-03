@@ -2,18 +2,15 @@ namespace ui {
 	export class ControlPanel extends layer.ui.Sprite {
 
 		private _shootAngle: number = 270;
-		private gameSprite: egret.Sprite;
+		public meshSprite: MeshUI;
 		private jetSprite: egret.Sprite;
 		private raySprite: egret.Shape;
-		private jetPoint: sharp.Point;
+		public jetPoint: sharp.Point;
 
-		private kb: KeyBoard;
-
-		constructor(gameSprite: egret.Sprite, jetPoint?: sharp.Point)
+		constructor(jetPoint: sharp.Point)
 		{
 			super();
-			this.gameSprite = gameSprite;
-			this.jetPoint = jetPoint == null ? new sharp.Point(this.getStage().stageWidth / 2, this.getStage().stageHeight - 100) : jetPoint;
+			this.jetPoint = jetPoint
 		}
 
 		public set shootAngle(v: number){
@@ -36,21 +33,43 @@ namespace ui {
 
 		public rotateLeft()
 		{
-			this.shootAngle -= 2;
+			this.shootAngle -= 1;
 			console.log('←');
 		}
 
 		public rotateRight()
 		{
-			this.shootAngle += 2;
+			this.shootAngle += 1;
 			console.log('→');
 		}
 
-		public shoot()
+		public shoot(prepareBubble: BubbleUI, traces: sharp.Point[]): Promise<any>
 		{
 			console.log('↑');
+			let duration = (p1: sharp.Point, p2: sharp.Point) => {
+				return sharp.distance(p1, p2) / 2; // 1px per 1ms
+			}
+			let ts = [...traces];
+			return new Promise(reslove => {
+				let lastPoint = ts.shift();
+				let tween = egret.Tween.get(prepareBubble)
+					.to({
+						x: lastPoint.x,
+						y: lastPoint.y
+					}, 100);
+				for(let trace of ts)
+				{
+					tween = tween.to({
+						x: trace.x,
+						y: trace.y
+					}, duration(trace, lastPoint));
+					lastPoint = trace;
+				}
+				tween.call(() => {
+					reslove();
+				});
+			});
 		}
-
 
 		public onAddedToStage(event: egret.Event) : void {
 			let frameSprite = new egret.Sprite();
@@ -87,58 +106,21 @@ namespace ui {
 			this.raySprite = raySprite;
 
 			this.drawRay();
-			this.kb = new KeyBoard();
-			this.kb.addEventListener(KeyBoard.onkeydown, this.onKeyDown, this);
-
-			//this.stage.touchEnabled = true;
-			this.stage.addEventListener(egret.TouchEvent.TOUCH_TAP, this.onTap, this);
-
-		}
-
-		public reflectPoints(): sharp.Ray[]
-		{
-			let rect = sharp.Rectangle.create(this.gameSprite.x, this.gameSprite.y, this.gameSprite.width, this.gameSprite.height);
-			let sides = rect.sides;
-			let ray = new sharp.Ray(this.jetPoint, sharp.d2r(this.shootAngle));
-
-			let i = 0;
-			let rays: sharp.Ray[] = [];
-			while (true) {
-				let index = i % sides.length;
-				if (i > sides.length * 6) //反射了6次
-					break;
-				let ray1 = ray.reflectLine(sides[index]);
-
-				if (ray1 instanceof sharp.Ray) // 碰撞了
-				{
-					ray = ray1;
-					if (index == 0) // 上
-					{
-						rays.push(ray);
-						break;
-					} else if (index == 1 || index == 3) {//左右
-						rays.push(ray);
-					}
-
-				}
-				i++;
-			}
-
-			return rays;
 		}
 
 		private drawRay()
 		{
-			if (!this.raySprite) return;
+			if (!this.raySprite || !this.meshSprite) return;
 
+			let p = this.meshSprite.localToGlobal(0, 0);
 			this.raySprite.graphics.clear();
 			this.raySprite.graphics.lineStyle(1, 0xcccccc);
-			this.raySprite.graphics.drawRect(this.gameSprite.x, this.gameSprite.y, this.gameSprite.width, this.gameSprite.height);
+			this.raySprite.graphics.drawRect(p.x, p.y, this.meshSprite.width, this.meshSprite.height);
 			this.raySprite.graphics.lineStyle(1, 0xff00ff);
 
 			let lastPoint = this.jetPoint;
 
-			this.reflectPoints().forEach(ray => {
+			this.meshSprite.reflectRays(this.jetPoint, this.shootAngle).forEach(ray => {
 				this.raySprite.graphics.moveTo(lastPoint.x, lastPoint.y);
 				this.raySprite.graphics.lineTo(ray.x, ray.y);
 				this.raySprite.graphics.drawCircle(ray.x, ray.y, 1);
@@ -146,28 +128,21 @@ namespace ui {
 				this.raySprite.graphics.moveTo(ray.x, ray.y);
 				lastPoint = ray.start;
 			});
-		}
 
-		protected onKeyDown(event: any)
-		{
-			if (this.kb.isContain(event.data, KeyBoard.A) || this.kb.isContain(event.data, KeyBoard.keyArrow)) {
-				this.rotateLeft();
-			} else if (this.kb.isContain(event.data, KeyBoard.D) || this.kb.isContain(event.data, KeyBoard.RightArrow)) {
-				this.rotateRight();
-			} else if (this.kb.isContain(event.data, KeyBoard.SPACE) || this.kb.isContain(event.data, KeyBoard.W) || this.kb.isContain(event.data, KeyBoard.UpArrow)) {
-				this.shoot();
-			}
-		}
-
-		protected onTap(event: egret.TouchEvent)
-		{
-			let angle = sharp.slopeDegree(this.jetPoint, new sharp.Point(event.stageX, event.stageY));
-			let theta = Math.abs(angle - this.shootAngle);
-			egret.Tween.get(this).to({
-				shootAngle: angle
-			}, theta * 5).call(() => {
-				this.shoot();
+			this.raySprite.graphics.lineStyle(1, 0xff);
+			this.raySprite.graphics.beginFill(1, 0xff);
+			lastPoint = this.jetPoint;
+			let rays = this.meshSprite.reflectRays(this.jetPoint, this.shootAngle),
+				intersection = this.meshSprite.intersectsBubble(rays),
+				traces = this.meshSprite.circleTraces(rays, intersection);
+			traces.forEach(p => {
+				this.raySprite.graphics.moveTo(lastPoint.x, lastPoint.y);
+				this.raySprite.graphics.lineTo(p.x, p.y);
+				this.raySprite.graphics.drawCircle(p.x, p.y, 2);
+				lastPoint = p;
 			});
+			this.raySprite.graphics.endFill();
+			this.raySprite.graphics.drawCircle(lastPoint.x, lastPoint.y, this.meshSprite.radius);
 		}
 
 		public onRemovedFromStage(event: egret.Event): void {
@@ -176,8 +151,7 @@ namespace ui {
 		}
 
 		public removeAllEventListeners(): void {
-			this.kb.removeEventListener(KeyBoard.onkeydown, this.onKeyDown, this);
-			this.stage.removeEventListener(egret.TouchEvent.TOUCH_TAP, this.onTap, this);
+
 
 		}
 	}

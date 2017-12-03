@@ -20,10 +20,24 @@ class Cell {
 		return this.mesh.col(this.index);
 	}
 	/**
+	 * 偶数行
+	 */
+	public get evenRow(): boolean {
+		return this.row % 2 == 1;
+	}
+
+	/**
+	 * 奇数行
+	 */
+	public get oddRow(): boolean {
+		return this.row % 2 == 0;
+	}
+
+	/**
 	 * 偶数的最后一个
 	 */
 	public get evenLast(): boolean {
-		return (this.row % 2) == 1 && this.col + 1 == this.mesh.cols;
+		return this.evenRow && this.col + 1 == this.mesh.cols;
 	}
 
 	public get blank(): boolean {

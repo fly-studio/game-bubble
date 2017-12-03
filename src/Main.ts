@@ -65,11 +65,11 @@ class Main extends eui.UILayer {
         loadingView.load().then(() => this.createScene());
 
     }
-  
+
     private createScene() {
-        
+
         this.startCreateScene();
-        
+
     }
     /**
      * 创建场景界面
@@ -84,15 +84,8 @@ class Main extends eui.UILayer {
 
 
         let game = new ui.GameUI();
-        game.width = this.stage.stageWidth * .95;
-		game.height = this.stage.stageHeight;
-		game.x = this.stage.stageWidth * .025;
-		game.y = 0;
+
         this.addChild(game);
-
-        let control = new ui.ControlPanel(game);
-        this.addChild(control);
-
         game.start()
 
     }

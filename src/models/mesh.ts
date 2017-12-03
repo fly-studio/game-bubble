@@ -18,6 +18,14 @@ class Mesh extends MeshBase {
 		return this.cell(rowOrIndex, col).evenLast;
 	}
 
+	public evenRow(rowOrIndex: number, col?: number) : boolean {
+		return this.cell(rowOrIndex, col).evenRow;
+	}
+
+	public oddRow(rowOrIndex: number, col?: number) : boolean {
+		return this.cell(rowOrIndex, col).oddRow;
+	}
+
 	public at(index: number) : Cell|null {
 		if (index >= this.cells.length || index < 0)
 			throw new Error('Out of "cells" Array\'s bound');
@@ -86,7 +94,7 @@ class Mesh extends MeshBase {
 	/****************************************/
 	/* 下面都是消除函数 */
 	/****************************************/
-	
+
 
 	public crushedCells(cells?: Cell[]) : CrushedCells {
 		let crushes : CrushedCells = new CrushedCells(this);
@@ -101,31 +109,33 @@ class Mesh extends MeshBase {
 		};
 
 		let compareUp = (cell: Cell) => {
-			let upCell: Cell;
+			let siblingCell: Cell;
 			let row = cell.row;
 			let col = cell.col;
 
-			upCell = this.cell(row - 1, col); //上一行
-			if (cell.sameColor(upCell))
-				crushes.addCells([cell, upCell]);
-			if (row % 2 == 1 && col < this.cols - 1) // 偶数行
-			{
-				/**
-				 * ●   ○ ← 测这个 
-				 *   ●     实心圆col相同
-				 */
-				upCell = this.cell(row - 1, col + 1); //计算右边的
-				if (cell.sameColor(upCell))
-					crushes.addCells([cell, upCell]);
-			} else if (row % 2 != 1 && col > 0) { // 奇数行
-				/**
-				 * ↓ 测这个
-				 * ○   ●
-				 *   ●    实心圆col相同
-				 */
-				upCell = this.cell(row - 1, col - 1); //计算左边的
-				if (cell.sameColor(upCell))
-					crushes.addCells([cell, upCell]);
+			let rang = [[row - 1, col]]; //上一行 同col
+			/**
+			 * ●   ○ ← 测这个
+			 *   ●     偶数行 实心圆col相同
+			 */
+			if (cell.evenRow)
+				rang.push([row - 1, col + 1]);
+			/**
+			 * ↓ 测这个
+			 * ○   ●
+			 *   ●    奇数行 实心圆col相同
+			 */
+			else
+				rang.push([row - 1, col - 1]);
+
+			for (let i = 0; i < rang.length; i++) {
+				let r = rang[i];
+				if (r[1] < 0 || r[1] >= this.cols)
+					continue;
+
+				siblingCell = this.cell(r[0], r[1]);
+				if (cell.sameColor(siblingCell))
+					crushes.addCells([cell, siblingCell]);
 			}
 		}
 
@@ -142,7 +152,7 @@ class Mesh extends MeshBase {
 				tmpCells.push(cell);
 			}
 		}
-		
+
 		for(let row of this.rowsEntries()) {
 			for(let col of this.colsEntries()) {
 				let cell: Cell = cells[this.index(row, col)];
