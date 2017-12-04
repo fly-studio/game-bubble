@@ -101,6 +101,12 @@ namespace ui {
 			}
 		}
 
+		public circleStagePos(cellIndex: number)
+		{
+			let rect = this.getCellRectangle(cellIndex);
+			return sharp.Point.createFrom(this.localToGlobal(rect.centerPoint.x, rect.centerPoint.y)); //圆心 转换为stage坐标
+		}
+
 		/**
 		 * ray为舞台坐标
 		 */
@@ -149,60 +155,94 @@ namespace ui {
 					rayIndex: -1,
 					cell: null
 				}
-			let lastPoint = rays[0].start,
+			let lastRay = rays[0],
 				rayIndex: number,
 				cell: Cell,
-				siblingCell: Cell,
-				rect: sharp.Rectangle,
-				ray: sharp.Ray,
-				row: number,
-				col: number,
 				index: number,
-				p: sharp.Point,
-				i: number;
-			loop:
+				circlePoint: sharp.Point,
+				circlePoints: any[],
+				circle: sharp.Circle,
+				tangencyPoints: sharp.Point[],
+				slope: number,
+				result: IntersectsBubble = {
+					rayIndex: -1, cell: null
+				};
+
 			for(rayIndex = 1; rayIndex < rays.length; ++rayIndex) {
-				ray = rays[rayIndex];
+				circlePoints = [];
 				for(index of this.mesh.indicesEntries(-1)) // revert
 				{
-					rect = this.getCellRectangle(index);
-					p = sharp.Point.createFrom(this.localToGlobal(rect.centerPoint.x, rect.centerPoint.y)); // 转换为stage坐标
-					if (sharp.lineHitCircle(lastPoint, ray.start, p, this.radius + .5)) // 与哪个圆相交, +1 是为了避免270°时恰好在切线上
+					cell = this.mesh.cell(index);
+					if (cell.blank)
+						continue;
+					
+					circlePoint = this.circleStagePos(cell.index);
+					// 计算与第一个圆相切的切点，放大1倍
+					circle = new sharp.Circle(circlePoint, this.diameter + 1);
+					tangencyPoints = lastRay.intersectsCircle(circle);
+
+					if (tangencyPoints.length <= 0) // 不相交
+						continue;
+					
+					tangencyPoints.sort((a, b) => a.distance(lastRay.start) - b.distance(lastRay.start)); //按距离排序
+					// 第一个便是切点
+
+					circlePoints.push([tangencyPoints[0], cell]);
+				}
+
+				if ( circlePoints.length > 0)
+				{
+					circlePoints.sort((a, b) => a[0].distance(lastRay.start) - b[0].distance(lastRay.start)); //按距离排序
+					cell = circlePoints[0][1];
+					circlePoint = this.circleStagePos(cell.index);
+					slope = sharp.r2d(circlePoint.angle(circlePoints[0][0]));
+					slope = ~~((slope + 360) % 360);
+					console.log(cell.index, slope);
+					let range = [];
+					if (slope <= 45 || slope > 270) // 右相切，说明还可以继续飞行
 					{
-						cell = this.mesh.cell(index);
-						if (cell.evenLast) // 偶数行的最后一个
-							cell = this.mesh.cell(index - 1);
+						range.push([cell.row, cell.col + 1]);
+					}
+					else if (slope >= 135 && slope < 270) // 左相切，说明还可以继续飞行
+					{
+						range.push([cell.row, cell.col - 1]);
+					}
+					else if (slope > 45 && slope <= 90) // 右下
+					{
+						if (cell.evenRow) // 偶数行 /
+							range.push([cell.row + 1, cell.col + 1]);
+						else
+							range.push([cell.row + 1, cell.col])
+					}
+					else if (slope > 90 && slope < 135) // 左下
+					{
+						if (cell.evenRow) // 偶数行 \
+							range.push([cell.row + 1, cell.col]);
+						else
+							range.push([cell.row + 1, cell.col - 1])
+					}
 
-						if (!cell.blank) // 和一个实心相交
-							break loop;
-						row = this.mesh.row(index);
-						col = this.mesh.col(index);
-
-						if (row == 0) // 顶部
-							return {
-								rayIndex,
-								cell
-							};
-						let rang = [[row, col -1], [row, col + 1], [row - 1, col], [row + 1, col] ]; // 左 右 上
-						if (cell.evenRow) rang.push([row - 1, col + 1], [row + 1, col + 1]); else rang.push([row - 1, col - 1], [row + 1, col - 1]); // 见 mesh#crushedCells
-						for (i = 0; i < rang.length; i++) {
-							let r = rang[i];
-							if (r[1] < 0 || r[1] >= this.mesh.cols || r[0] >= this.mesh.rows)
-								continue;
-
-							siblingCell = this.mesh.cell(r[0], r[1]);
-							if (!siblingCell.blank)
-								return {
-									rayIndex,
-									cell
-								};
-						}
+					for (let i = 0; i < range.length; i++) {
+						let r = range[i];
+						if (r[1] < 0 || r[1] >= this.mesh.cols || r[0] >= this.mesh.rows)
+							continue;
+						
+						if (!this.mesh.blank(r[0], r[1]) || this.mesh.evenLast(r[0], r[1]))
+							continue;
+						
+						return {
+							rayIndex,
+							cell: this.mesh.cell(r[0], r[1]),
+						};
 					}
 				}
-				lastPoint = ray.start;
+
+				
+
+				lastRay = rays[rayIndex];
 			}
-			// 说明满了，可以直接挂了
-			return {rayIndex: -1, cell: null}
+			// 没有说明挂了
+			return result;
 		}
 
 		/**

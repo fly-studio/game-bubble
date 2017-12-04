@@ -20,6 +20,16 @@ namespace ui {
 			this.graphics.beginFill(this.cell.color, 0.4);
 			this.graphics.drawCircle(this.width / 2, this.height / 2, this.width / 2)
 			this.graphics.endFill();
+
+			let text = new egret.TextField;
+			text.size = 20;
+			text.width = this.width;
+			text.textColor = 0xffffff;
+			text.textAlign = "center";
+			text.text = this.cell.index.toString();
+			text.x = 0;
+			text.y = this.height / 2 - text.height / 2;
+			this.addChild(text);
 		}
 
 		public onRemovedFromStage(event: egret.Event): void {
