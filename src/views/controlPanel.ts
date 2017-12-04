@@ -1,7 +1,7 @@
 namespace ui {
 	export class ControlPanel extends layer.ui.Sprite {
 
-		private _shootAngle: number = 270;
+		private _shootAngle: number = 270.1;
 		public meshSprite: MeshUI;
 		private jetSprite: egret.Sprite;
 		private raySprite: egret.Shape;
@@ -18,6 +18,8 @@ namespace ui {
 				v = 190;
 			else if (v > 350)
 				v = 350;
+			else if (v == 270)
+				v = 270.1;
 
 			this._shootAngle = v;
 

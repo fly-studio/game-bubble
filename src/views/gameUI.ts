@@ -11,7 +11,7 @@ namespace ui {
 		constructor()
 		{
 			super();
-			this.mesh = new Mesh(8, 8);
+			this.mesh = new Mesh(14, 8);
 			this.mesh.cellColors = [
 				0xff0000,
 				0x00ff00,

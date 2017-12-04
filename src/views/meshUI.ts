@@ -178,7 +178,7 @@ namespace ui {
 					
 					circlePoint = this.circleStagePos(cell.index);
 					// 计算与第一个圆相切的切点，放大1倍
-					circle = new sharp.Circle(circlePoint, this.diameter + 1);
+					circle = new sharp.Circle(circlePoint, this.diameter);
 					tangencyPoints = lastRay.intersectsCircle(circle);
 
 					if (tangencyPoints.length <= 0) // 不相交
@@ -241,7 +241,7 @@ namespace ui {
 
 				lastRay = rays[rayIndex];
 			}
-			// 没有说明挂了
+			// 最后一行，或者没值 则表示挂
 			return result;
 		}
 
