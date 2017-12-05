@@ -3,10 +3,10 @@ namespace ui {
 		public mesh: Mesh;
 		protected meshSprite: MeshUI;
 		protected controlSprite: ControlPanel;
-  		private prepareSprite: ui.PrepareSprite;
-		private kb:KeyBoard;
-		protected jetPoint: sharp.Point;
-
+  		protected prepareSprite: ui.PrepareSprite;
+		private kb: KeyBoard;
+		private container: MeshContainer;
+		private enabled: boolean;
 
 		constructor()
 		{
@@ -20,20 +20,21 @@ namespace ui {
 				0x00ffff,
 				0x0,
 				0xffff00
-
 			];
-			this.jetPoint = new sharp.Point(this.getStage().stageWidth / 2, this.getStage().stageHeight - 100);
+			this.enabled = true;
+			let stage = this.getStage();
+			this.container = new MeshContainer(this.mesh, new sharp.Rectangle(stage.stageWidth * .025, 0, stage.stageWidth * .95, stage.stageHeight), new sharp.Point(stage.stageWidth / 2, stage.stageHeight - 100));
 		}
 
 		public onAddedToStage(event: egret.Event) : void {
 
-			let prepareSprite = new ui.PrepareSprite(this.jetPoint);
+			let prepareSprite = new ui.PrepareSprite(this.container);
 			prepareSprite.x = 0;
 			prepareSprite.y = 0;
 			this.addChild(prepareSprite);
 			this.prepareSprite = prepareSprite;
 
-			this.controlSprite = new ui.ControlPanel(this.jetPoint);
+			this.controlSprite = new ui.ControlPanel(this.container);
 			this.addChild(this.controlSprite);
 
 			this.kb = new KeyBoard();
@@ -53,49 +54,66 @@ namespace ui {
 
 		public start()
 		{
-			this.mesh.createMesh(_.range(32));
+			this.enabled = true;
+			this.mesh.createMesh(_.range(16));
 
 			this.buildMeshSprite();
 		}
 
-		public shoot()
+		public stop()
 		{
-			let rays = this.meshSprite.reflectRays(this.jetPoint, this.controlSprite.shootAngle),
-				intersection = this.meshSprite.intersectsBubble(rays),
-				traces = this.meshSprite.circleTraces(rays, intersection);
-			let prepareBubble = this.prepareSprite.prepareBubble;
+			this.enabled = false;
 
-			if (intersection.rayIndex == -1)
+			layer.ui.alert('Game Over');
+		}
+
+		public async shoot()
+		{
+			this.enabled = false;
+			let rays = this.container.reflectRays(),
+				intersection = this.container.intersectsBubble(rays),
+				traces = this.container.circleTraces(rays, intersection);
+
+			if (intersection.rayIndex < 0)
 				return ;
 
-			intersection.cell.colorIndex = prepareBubble.cell.colorIndex;
-			prepareBubble.cell = intersection.cell;
-			Promise.all([
-				this.controlSprite.shoot(prepareBubble, traces),
-				this.prepareSprite.pushBubble(this.meshSprite.createPrepareBubble()),
-			]).then(v => {
-				this.meshSprite.replaceBubbleUI(prepareBubble);
-			});
+			let prepareBubble = this.prepareSprite.prepareBubble;
+			prepareBubble.cell.index = intersection.cell.index;
+
+			await Promise.all([ // 同时
+				this.controlSprite.renderShooting(prepareBubble, traces),
+				this.prepareSprite.pushBubble(this.container.createPrepareBubble())
+			]);
+
+			if (intersection.cell && intersection.cell.row >= this.mesh.rows - 1) // 最后一行被填值
+				return this.stop();
+
+			this.meshSprite.replaceBubbleUI(prepareBubble);
+
+			let crushes: CrushedCells = this.mesh.crushedCells(),
+				crushedGroup: CrushedGroup = crushes.cellInGroup(intersection.cell.index);
+			if (crushedGroup.cellIndices.length > 0) // 有消除的 
+			{
+				let dropingIndices: number[] = this.mesh.dropingIndices(crushedGroup.cellIndices);
+				await Promise.all([
+					this.meshSprite.renderCrush(crushedGroup),
+					this.meshSprite.renderDroping(dropingIndices),
+				]);
+			}
+
+			this.enabled = true;
 		}
+
 
 		public buildMeshSprite()
 		{
 			if (this.meshSprite)
-			{
 				this.meshSprite.destroy();
-				this.controlSprite.destroy();
-			}
 
-			this.meshSprite = new MeshUI(this.mesh);
-			this.meshSprite.x = this.stage.stageWidth * .025;
-			this.meshSprite.y = 0;
-			this.meshSprite.width = this.stage.stageWidth * .95;
-			this.meshSprite.height = this.stage.stageHeight;
+			this.meshSprite = new MeshUI(this.container);
 			this.addChild(this.meshSprite);
 
-			this.controlSprite.meshSprite = this.meshSprite;
-
-			this.prepareSprite.pushBubble(this.meshSprite.createPrepareBubble());
+			this.prepareSprite.pushBubble(this.container.createPrepareBubble());
 		}
 
 		protected onKeyDown(event: any)
@@ -105,13 +123,15 @@ namespace ui {
 			} else if (this.kb.isContain(event.data, KeyBoard.D) || this.kb.isContain(event.data, KeyBoard.RightArrow)) {
 				this.controlSprite.rotateRight();
 			} else if (this.kb.isContain(event.data, KeyBoard.SPACE) || this.kb.isContain(event.data, KeyBoard.W) || this.kb.isContain(event.data, KeyBoard.UpArrow)) {
+				if (!this.enabled) return;
 				this.shoot();
 			}
 		}
 
 		protected onTap(event: egret.TouchEvent)
 		{
-			let angle = sharp.slopeDegree(this.jetPoint, new sharp.Point(event.stageX, event.stageY));
+			if (!this.enabled) return;
+			let angle = sharp.slopeDegree(this.container.jetPoint, new sharp.Point(event.stageX, event.stageY));
 			let theta = Math.abs(angle - this.controlSprite.shootAngle);
 			egret.Tween.get(this.controlSprite).to({
 				shootAngle: angle

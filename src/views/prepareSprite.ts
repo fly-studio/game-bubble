@@ -3,12 +3,12 @@ namespace ui {
 	export class PrepareSprite extends layer.ui.Sprite {
 
 		protected bubbles: BubbleUI[];
-		protected jetPoint: sharp.Point;
+		protected container: MeshContainer;
 
-		constructor(jetPoint: sharp.Point)
+		constructor(container: MeshContainer)
 		{
 			super();
-			this.jetPoint = jetPoint;
+			this.container = container;
 			this.bubbles = [];
 		}
 
@@ -33,7 +33,7 @@ namespace ui {
 			this.bubbles.forEach((bubble, i) => {
 				promises.push(new Promise<any>(resolve => {
 					egret.Tween.get(bubble).to({
-						x: this.jetPoint.x + i * 120
+						x: this.container.jetPoint.x + i * 120
 					}).call(() => {
 						resolve();
 					});

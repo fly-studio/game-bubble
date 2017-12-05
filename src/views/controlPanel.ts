@@ -1,16 +1,16 @@
 namespace ui {
 	export class ControlPanel extends layer.ui.Sprite {
 
-		private _shootAngle: number = 270.1;
-		public meshSprite: MeshUI;
+		public container: MeshContainer;
 		private jetSprite: egret.Sprite;
 		private raySprite: egret.Shape;
-		public jetPoint: sharp.Point;
+		private perAngle: number;
 
-		constructor(jetPoint: sharp.Point)
+		constructor(container: MeshContainer)
 		{
 			super();
-			this.jetPoint = jetPoint
+			this.container = container;
+			this.perAngle = sharp.r2d(container.getPerAngle());
 		}
 
 		public set shootAngle(v: number){
@@ -21,7 +21,7 @@ namespace ui {
 			else if (v == 270)
 				v = 270.1;
 
-			this._shootAngle = v;
+			this.container.shootAngle = v;
 
 			this.drawRay();
 
@@ -30,22 +30,24 @@ namespace ui {
 		}
 
 		public get shootAngle() : number {
-			return this._shootAngle;
+			return this.container.shootAngle;
 		}
 
 		public rotateLeft()
 		{
-			this.shootAngle -= 1;
+			this.shootAngle -= this.perAngle;
 			console.log('←');
 		}
 
 		public rotateRight()
 		{
-			this.shootAngle += 1;
+			this.shootAngle += this.perAngle;
 			console.log('→');
 		}
 
-		public shoot(prepareBubble: BubbleUI, traces: sharp.Point[]): Promise<any>
+
+
+		public renderShooting(prepareBubble: BubbleUI, traces: sharp.Point[]): Promise<any>
 		{
 			console.log('↑');
 			let duration = (p1: sharp.Point, p2: sharp.Point) => {
@@ -82,8 +84,8 @@ namespace ui {
 			this.addChild(frameSprite);
 
 			let jetSprite = new egret.Sprite();
-			jetSprite.x = this.jetPoint.x;
-			jetSprite.y = this.jetPoint.y;
+			jetSprite.x = this.container.jetPoint.x;
+			jetSprite.y = this.container.jetPoint.y;
 			jetSprite.rotation = this.shootAngle - 270;
 
 			jetSprite.graphics.lineStyle(1, 0xff0000);
@@ -112,17 +114,17 @@ namespace ui {
 
 		private drawRay()
 		{
-			if (!this.raySprite || !this.meshSprite) return;
+			if (!this.raySprite) return;
 
-			let p = this.meshSprite.localToGlobal(0, 0);
+			let p = this.container.localToGlobal(0, 0);
 			this.raySprite.graphics.clear();
 			this.raySprite.graphics.lineStyle(1, 0xcccccc);
-			this.raySprite.graphics.drawRect(p.x, p.y, this.meshSprite.width, this.meshSprite.height);
+			this.raySprite.graphics.drawRect(p.x, p.y, this.container.rect.width, this.container.rect.height);
 			this.raySprite.graphics.lineStyle(1, 0xff00ff);
 
-			let lastPoint = this.jetPoint;
+			let lastPoint = this.container.jetPoint;
 
-			this.meshSprite.reflectRays(this.jetPoint, this.shootAngle).forEach(ray => {
+			this.container.reflectRays().forEach(ray => {
 				this.raySprite.graphics.moveTo(lastPoint.x, lastPoint.y);
 				this.raySprite.graphics.lineTo(ray.x, ray.y);
 				this.raySprite.graphics.drawCircle(ray.x, ray.y, 1);
@@ -133,10 +135,10 @@ namespace ui {
 
 			this.raySprite.graphics.lineStyle(1, 0xff);
 			this.raySprite.graphics.beginFill(1, 0xff);
-			lastPoint = this.jetPoint;
-			let rays = this.meshSprite.reflectRays(this.jetPoint, this.shootAngle),
-				intersection = this.meshSprite.intersectsBubble(rays),
-				traces = this.meshSprite.circleTraces(rays, intersection);
+			lastPoint = this.container.jetPoint;
+			let rays = this.container.reflectRays(),
+				intersection = this.container.intersectsBubble(rays),
+				traces = this.container.circleTraces(rays, intersection);
 			traces.forEach(p => {
 				this.raySprite.graphics.moveTo(lastPoint.x, lastPoint.y);
 				this.raySprite.graphics.lineTo(p.x, p.y);
@@ -144,7 +146,7 @@ namespace ui {
 				lastPoint = p;
 			});
 			this.raySprite.graphics.endFill();
-			this.raySprite.graphics.drawCircle(lastPoint.x, lastPoint.y, this.meshSprite.radius);
+			this.raySprite.graphics.drawCircle(lastPoint.x, lastPoint.y, this.container.radius);
 		}
 
 		public onRemovedFromStage(event: egret.Event): void {

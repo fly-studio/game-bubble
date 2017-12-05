@@ -1,5 +1,13 @@
 class Mesh extends MeshBase {
 
+	constructor(rows:number, cols:number)
+	{
+		super(rows, cols);
+		this.cells = [];
+		for(let index of this.indicesEntries()) // fill all
+			this.cells.push(this.createCell(index));
+	}
+
 	//此类都是读取的函数
 
 	public color(rowOrIndex: number, col?: number) : any {
@@ -78,7 +86,7 @@ class Mesh extends MeshBase {
 	/**
 	 * 初始化的时候 需要绘制的图形
 	 */
-	public createMesh(initIndices: number[]) : void
+	public createMesh(initIndices: number[] = []) : void
 	{
 		this.cells = [];
 		for(let index of this.indicesEntries()) // fill all
@@ -91,14 +99,12 @@ class Mesh extends MeshBase {
 		});
 	}
 
-	/****************************************/
-	/* 下面都是消除函数 */
-	/****************************************/
-
-
+	/**
+	 * 可消除的
+	 */
 	public crushedCells(cells?: Cell[]) : CrushedCells {
 		let crushes : CrushedCells = new CrushedCells(this);
-		if (cells == null) cells = this.cells;
+		if (cells == undefined) cells = this.cells;
 
 		let tmpCells: Cell[] = [];
 
@@ -133,7 +139,7 @@ class Mesh extends MeshBase {
 				if (r[1] < 0 || r[1] >= this.cols)
 					continue;
 
-				siblingCell = this.cell(r[0], r[1]);
+				siblingCell = cells[this.index(r[0], r[1])];
 				if (cell.sameColor(siblingCell))
 					crushes.addCells([cell, siblingCell]);
 			}
@@ -167,6 +173,11 @@ class Mesh extends MeshBase {
 			dump();
 		}
 		return crushes;
+	}
+
+	public dropingIndices(crushedIndices: number[] = []): number[]
+	{
+		return [];
 	}
 
 }
