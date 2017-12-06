@@ -60,6 +60,13 @@ namespace ui {
 			this.buildMeshSprite();
 		}
 
+		public win()
+		{
+			this.enabled = false;
+
+			layer.ui.alert('Win');
+		}
+
 		public stop()
 		{
 			this.enabled = false;
@@ -100,6 +107,9 @@ namespace ui {
 					this.meshSprite.renderDroping(dropingIndices),
 				]);
 			}
+
+			if (this.mesh.isEmpty())
+				return this.win();
 
 			this.enabled = true;
 		}

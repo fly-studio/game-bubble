@@ -50,7 +50,7 @@ class MeshContainer {
 			b = C.distance(this.jetPoint),
 			c = B.distance(this.jetPoint),
 			a = B.distance(C);
-		return Math.acos((b * b + c * c - a * a) / (2 * b * c)) / (this.mesh.cols - 1 );
+		return Math.acos((b * b + c * c - a * a) / (2 * b * c)) / (this.mesh.cols - 1 ) / 2;
 	}
 
 	public localToGlobal(x: number, y: number)
@@ -158,6 +158,9 @@ class MeshContainer {
 				// 第一个便是切点
 
 				circlePoints.push([tangencyPoints[0], cell]);
+
+				if (ray.intersectsCircle(new sharp.Circle(circlePoint, this.radius)).length > 0) // 有线穿过本圆
+					break;
 			}
 
 			if ( circlePoints.length > 0) // 有相交

@@ -45,6 +45,14 @@ class Mesh extends MeshBase {
 		return this.at(index);
 	}
 
+	public isEmpty(): boolean
+	{
+		for(let index of this.indicesEntries()) // fill all
+			if (!this.blank(index))
+				return false;
+		return true;
+	}
+
 	protected randomColorIndex(rowOrIndex: number, col?: number): number {
 		let random = (): number => {
 			let colorCount:number = this.cellColors.length;
