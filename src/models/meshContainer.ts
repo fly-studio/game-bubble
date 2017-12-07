@@ -147,7 +147,7 @@ class MeshContainer {
 					continue;
 				
 				circlePoint = this.getCirclePos(cell.index);
-				// 计算与第一个圆相切的切点，放大1倍
+				// 计算与第一个圆相切的切点，放大1倍，
 				circle = new sharp.Circle(circlePoint, this.diameter);
 				tangencyPoints = ray.intersectsCircle(circle);
 
@@ -165,7 +165,9 @@ class MeshContainer {
 
 			if ( circlePoints.length > 0) // 有相交
 			{
-				circlePoints.sort((a, b) => a[0].distance(ray.start) - b[0].distance(ray.start)); //按距离排序
+				circlePoints.sort((a, b) => {
+					return Math.abs(a[0].angle(ray.start) - ray.angle) - Math.abs(b[0].angle(ray.start) - ray.angle);
+				}); //按垂直线排序，经过简化，直接按斜率差值排序即可
 				let range = [];
 				for (let [p, cell] of circlePoints)
 				{
@@ -173,13 +175,32 @@ class MeshContainer {
 					slope = sharp.r2d(circlePoint.angle(p));
 					slope = ((slope + 360) % 360);
 					console.log(cell.index, slope);
-					if (slope <= 45 || slope >= 337.5) // 右相切 45°
+					if (slope <= 90 || slope >= 337.5) // 右 右下
 					{
-						range.push([cell.row, cell.col + 1]);
+						let r = [
+							[cell.row, cell.col + 1]
+						];
+
+						if (cell.evenRow) // 偶数行 /
+							r.push([cell.row + 1, cell.col + 1]);
+						else
+							r.push([cell.row + 1, cell.col]);
+
+						if (slope > 45 && slope <= 90) r = r.reverse();  // 下面优先
+						range.push(...r);
 					}
-					else if (slope >= 135 && slope <= 202.5) // 左相切 45°
+					else if (slope > 90 && slope <= 202.5) // 左 左下
 					{
-						range.push([cell.row, cell.col - 1]);
+						let r = [
+							[cell.row, cell.col - 1]
+						];
+						if (cell.evenRow) // 偶数行 \
+							r.push([cell.row + 1, cell.col]);
+						else
+							r.push([cell.row + 1, cell.col - 1]);
+
+						if (slope < 135) r = r.reverse(); // 下面优先
+						range.push(...r);
 					}
 					else if (slope < 337.5 && slope > 270)  // 右上 67.5°
 					{
@@ -195,35 +216,19 @@ class MeshContainer {
 						else
 							range.push([cell.row - 1, cell.col - 1])
 					}
-					else if (slope > 45 && slope <= 90) // 右下 67.5°
-					{
-						if (cell.evenRow) // 偶数行 /
-							range.push([cell.row + 1, cell.col + 1]);
-						else
-							range.push([cell.row + 1, cell.col])
-					}
-					else if (slope > 90 && slope < 135) // 左下 67.5°
-					{
-						if (cell.evenRow) // 偶数行 \
-							range.push([cell.row + 1, cell.col]);
-						else
-							range.push([cell.row + 1, cell.col - 1])
-					}
 				}
 
-				for (let i = 0; i < range.length; i++) {
-					let r = range[i];
-					if (r[0] >= this.mesh.rows || r[0] < 0 || r[1] < 0 || r[1] >= this.mesh.cols)
-						continue;
-					
-					if (!this.mesh.blank(r[0], r[1]) || this.mesh.evenLast(r[0], r[1]))
-						continue;
-					
+				let indices: number[] = range.filter(r => r[0] < this.mesh.rows && r[0] >= 0 && r[1] >= 0 && r[1] < this.mesh.cols)
+					.map(r => this.mesh.index(r[0], r[1]))
+					.filter(i => this.mesh.blank(i) && !this.mesh.evenLast(i))
+					//.sort((a, b) => ray.start.distance(this.getCirclePos(a)) - ray.start.distance(this.getCirclePos(b)))
+					;
+				
+				if (indices.length > 0)
 					return {
 						rayIndex,
-						cell: this.mesh.cell(r[0], r[1]),
+						cell: this.mesh.cell(indices[0]),
 					};
-				}
 				
 			} else { // 没有找到交点
 				ray = rays[rayIndex + 1];

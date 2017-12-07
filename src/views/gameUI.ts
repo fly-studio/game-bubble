@@ -87,10 +87,7 @@ namespace ui {
 			let prepareBubble = this.prepareSprite.prepareBubble;
 			prepareBubble.cell.index = intersection.cell.index;
 
-			await Promise.all([ // 同时
-				this.controlSprite.renderShooting(prepareBubble, traces),
-				this.prepareSprite.pushBubble(this.container.createPrepareBubble())
-			]);
+			await this.controlSprite.renderShooting(prepareBubble, traces);
 
 			if (intersection.cell && intersection.cell.row >= this.mesh.rows - 1) // 最后一行被填值
 				return this.stop();
@@ -107,9 +104,11 @@ namespace ui {
 					this.meshSprite.renderDroping(dropingIndices),
 				]);
 			}
-
 			if (this.mesh.isEmpty())
 				return this.win();
+			
+			await this.prepareSprite.pushBubble(this.container.createPrepareBubble())
+			
 
 			this.enabled = true;
 		}
