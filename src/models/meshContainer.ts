@@ -6,7 +6,7 @@ interface IntersectsBubble {
 class MeshContainer {
 	public mesh: Mesh;
 	public rect: sharp.Rectangle;
-	public shootAngle: number = 270.001;
+	public shootAngle: number = 270;
 	public radius: number;
 	public diameter: number;
 	public jetPoint: sharp.Point;
@@ -45,12 +45,12 @@ class MeshContainer {
 	 */
 	public getPerAngle()
 	{
-		let C = this.getCirclePos(0),
-			B = this.getCirclePos(this.mesh.cols - 1),
+		let C = this.getCirclePos(this.mesh.index(1, 0)),
+			B = this.getCirclePos(this.mesh.index(1, this.mesh.cols - 2)),
 			b = C.distance(this.jetPoint),
 			c = B.distance(this.jetPoint),
 			a = B.distance(C);
-		return Math.acos((b * b + c * c - a * a) / (2 * b * c)) / (this.mesh.cols - 1 ) / 2;
+		return Math.acos((b * b + c * c - a * a) / (2 * b * c)) / (this.mesh.cols - 2 ) / 2;
 	}
 
 	public localToGlobal(x: number, y: number)
@@ -83,7 +83,7 @@ class MeshContainer {
 		let p = this.localToGlobal(this.radius, this.radius),
 			rect = sharp.Rectangle.create(p.x, p.y, this.rect.width - this.diameter, this.rect.height - this.radius), //由于是圆，所以碰撞的矩形是以左右上下的圆心为基准
 			sides = rect.sides,
-			ray = new sharp.Ray(this.jetPoint, sharp.d2r(this.shootAngle)),
+			ray = new sharp.Ray(this.jetPoint, sharp.d2r(Math.abs(this.shootAngle - 270) <= 0.00001 ? 270.00001 : this.shootAngle)),
 			i: number = 0,
 			index: number,
 			rays: sharp.Ray[] = [ray],
@@ -173,11 +173,11 @@ class MeshContainer {
 					slope = sharp.r2d(circlePoint.angle(p));
 					slope = ((slope + 360) % 360);
 					console.log(cell.index, slope);
-					if (slope <= 22.5 || slope >= 337.5) // 右相切 45°
+					if (slope <= 45 || slope >= 337.5) // 右相切 45°
 					{
 						range.push([cell.row, cell.col + 1]);
 					}
-					else if (slope >= 157.5 && slope <= 202.5) // 左相切 45°
+					else if (slope >= 135 && slope <= 202.5) // 左相切 45°
 					{
 						range.push([cell.row, cell.col - 1]);
 					}
@@ -195,14 +195,14 @@ class MeshContainer {
 						else
 							range.push([cell.row - 1, cell.col - 1])
 					}
-					else if (slope > 22.5 && slope <= 90) // 右下 67.5°
+					else if (slope > 45 && slope <= 90) // 右下 67.5°
 					{
 						if (cell.evenRow) // 偶数行 /
 							range.push([cell.row + 1, cell.col + 1]);
 						else
 							range.push([cell.row + 1, cell.col])
 					}
-					else if (slope > 90 && slope < 157.5) // 左下 67.5°
+					else if (slope > 90 && slope < 135) // 左下 67.5°
 					{
 						if (cell.evenRow) // 偶数行 \
 							range.push([cell.row + 1, cell.col]);

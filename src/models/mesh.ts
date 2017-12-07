@@ -53,6 +53,54 @@ class Mesh extends MeshBase {
 		return true;
 	}
 
+	public *solidIndicesEntries()
+	{
+		for(let index of this.solidIndices())
+			yield index;
+	}
+
+	public solidIndices()
+	{
+		let solids: number[] = [];
+		for(let index of this.indicesEntries())
+		{
+			if (!this.blank(index))
+				solids.push(index);
+		}
+		return solids;
+	}
+
+	/**
+	 * 上下左右的index合集
+	 */
+	public closestIndices(index: number, withSiblings: boolean = true): number[]
+	{
+		let col = this.col(index);
+		let row = this.row(index);
+
+		let range: any[] = [];
+
+		if (withSiblings)
+			range.push([row, col - 1], [row, col + 1]); // 左右
+
+		range.push([row - 1, col], [row + 1, col]); // 上 下
+		if (row % 2 == 1) // 偶数行
+		{
+			range.push([row - 1, col + 1], [row + 1, col + 1]); // 上右 下右
+		} else {
+			range.push([row - 1, col - 1], [row + 1, col - 1]); // 上左 下左
+		}
+		
+		let indices: number[] = [];
+		for(let [row, col] of range)
+		{
+			if (col < 0 || col >= this.cols || row < 0 || row >= this.rows || (row % 2 == 1 && col == this.cols - 1)) // 超出范围，或者偶数行的最后一个
+				continue;
+			indices.push(this.index(row, col));
+		}
+		return indices;
+	}
+
 	protected randomColorIndex(rowOrIndex: number, col?: number): number {
 		let random = (): number => {
 			let colorCount:number = this.cellColors.length;
@@ -127,23 +175,23 @@ class Mesh extends MeshBase {
 			let row = cell.row;
 			let col = cell.col;
 
-			let rang = [[row - 1, col]]; //上一行 同col
+			let range = [[row - 1, col]]; //上一行 同col
 			/**
 			 * ●   ○ ← 测这个
 			 *   ●     偶数行 实心圆col相同
 			 */
 			if (cell.evenRow)
-				rang.push([row - 1, col + 1]);
+				range.push([row - 1, col + 1]);
 			/**
 			 * ↓ 测这个
 			 * ○   ●
 			 *   ●    奇数行 实心圆col相同
 			 */
 			else
-				rang.push([row - 1, col - 1]);
+				range.push([row - 1, col - 1]);
 
-			for (let i = 0; i < rang.length; i++) {
-				let r = rang[i];
+			for (let i = 0; i < range.length; i++) {
+				let r = range[i];
 				if (r[1] < 0 || r[1] >= this.cols)
 					continue;
 
@@ -185,7 +233,44 @@ class Mesh extends MeshBase {
 
 	public dropingIndices(crushedIndices: number[] = []): number[]
 	{
-		return [];
+		//按列, 先入固定的表
+		let fixedIndices: number[] = [];
+		for(let col of this.colsEntries())
+		{
+			for (let row of this.rowsEntries())
+			{
+				let index = this.index(row, col);
+
+				if (this.evenLast(index)) // 偶数行最后一个，则取左边
+					index--;
+				
+				if (this.blank(index) || crushedIndices.includes(index))
+					break;
+				fixedIndices.push(index);
+			}
+		}
+
+		let solidIndices = _.difference(this.solidIndices(), crushedIndices);
+		while1:
+		while (true)
+		{
+			for(let index of _.difference(solidIndices, fixedIndices)) // 取不固定的
+			{
+				let closestIndices = this.closestIndices(index).filter(i => !this.blank(i)); // 寻找周围的，且不为blank的
+				for(let i of closestIndices)
+				{
+					if (fixedIndices.includes(i))
+					{
+						fixedIndices = _.union(fixedIndices, closestIndices, [index]);
+						continue while1; // 跳出重新循环
+					}
+				} 
+			}
+			// 运行到这里，就已经说明没有了
+			break;
+		}
+
+		return  _.difference(solidIndices, fixedIndices);
 	}
 
 }

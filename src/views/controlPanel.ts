@@ -18,8 +18,6 @@ namespace ui {
 				v = 190;
 			else if (v > 350)
 				v = 350;
-			else if (v == 270)
-				v = 270.1;
 
 			this.container.shootAngle = v;
 

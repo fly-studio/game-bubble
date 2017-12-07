@@ -34,7 +34,7 @@ namespace ui {
 				promises.push(new Promise<any>(resolve => {
 					egret.Tween.get(bubble).to({
 						x: this.container.jetPoint.x + i * 120
-					}).call(() => {
+					}, 10).call(() => {
 						resolve();
 					});
 				}));

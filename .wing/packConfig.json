@@ -4,6 +4,7 @@
     "maxImageHeight": 2048,
     "defaultResPath": "d:\\Codes\\Games\\bubble\\resource\\default.res.json",
     "packGroups": {
-        "preload": true
+        "preload": true,
+        "eui": true
     }
 }
